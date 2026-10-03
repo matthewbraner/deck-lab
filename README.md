@@ -1,8 +1,14 @@
 # Deck Lab
 
-**A native macOS workspace for Yu-Gi-Oh! deck research, collection tracking, and opening-hand analysis.**
+**A desktop workspace for Yu-Gi-Oh! deck research, collection tracking, and opening-hand analysis.**
 
 Built with SwiftUI and AppKit for Apple silicon Macs running macOS 14 or later. Deck Lab brings deck datasets, card previews, your physical collection, and probability tools into one app.
+
+## Windows version
+
+A Windows 10/11 x64 desktop preview is available in [`windows/`](windows/README.md). It includes deck browsing, card previews, shared collection tracking, saved builds, manual pricing and probability tools. The [Windows desktop workflow](https://github.com/matthewbraner/deck-lab/actions/workflows/windows.yml) builds a downloadable installer artifact for each successful run. See the [Windows guide](windows/README.md) for installation and the feature-parity table.
+
+The sections below describe the full macOS app. The Windows preview is a separate implementation and does not yet include every advanced macOS tool.
 
 ## What you can do
 
@@ -14,7 +20,7 @@ Built with SwiftUI and AppKit for Apple silicon Macs running macOS 14 or later. 
 - **Test opening hands:** use hypergeometric probabilities, named card buckets, AND/OR combo requirements, conditional draws, and simulation.
 - **Keep your work portable:** import and export YDK/CSV data, restore JSON backups, and share decks as HTML or PNG.
 
-## Build and run
+## Build and run on macOS
 
 Requirements: **Apple silicon**, **macOS 14+**, and Apple's **Command Line Tools with Swift**. No third-party Swift packages are required.
 

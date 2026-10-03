@@ -1,0 +1,41 @@
+{
+  "name": "deck-lab-windows",
+  "version": "0.1.0",
+  "description": "Deck Lab for Windows: Yu-Gi-Oh deck research, collection tracking and probability tools",
+  "private": true,
+  "author": "matthewbraner",
+  "main": "src/main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test test/*.test.cjs",
+    "check": "node --check src/main.cjs && node --check src/preload.cjs && node --check src/core.cjs && node --check src/providers.cjs && node --check src/renderer.js",
+    "dist:win": "electron-builder --win nsis --x64",
+    "smoke": "electron . --smoke-test"
+  },
+  "devDependencies": {
+    "electron": "44.5.1",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "com.decklab.windows",
+    "productName": "Deck Lab",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis",
+      "artifactName": "Deck-Lab-Windows-${version}-${arch}-Setup.${ext}",
+      "icon": "src/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true
+    }
+  }
+}

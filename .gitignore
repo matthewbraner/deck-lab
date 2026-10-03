@@ -14,3 +14,7 @@ work/
 qa-data/
 inventory.json
 tcg-*.json
+# Windows / Electron outputs
+node_modules/
+dist/
+*.exe
