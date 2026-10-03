@@ -16,6 +16,14 @@ const core = require("./core.cjs"),
   { Providers } = require("./providers.cjs");
 let window, store, providers, state;
 const smoke = process.argv.includes("--smoke-test");
+// Keep Chromium preferences (including theme and view mode) out of the real profile.
+if (smoke)
+  app.setPath(
+    "userData",
+    require("node:fs").mkdtempSync(
+      path.join(os.tmpdir(), "deck-lab-test-profile-"),
+    ),
+  );
 const page = pathToFileURL(path.join(__dirname, "index.html")).href;
 let mutations = Promise.resolve();
 function mutate(fn) {
