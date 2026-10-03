@@ -1,0 +1,16 @@
+# Generated macOS artifacts and local tooling
+.DS_Store
+*.app/
+.build/
+build/
+*.dSYM/
+*.log
+.swiftpm/
+# Personal configuration and runtime data
+.env
+.env.*
+!.env.example
+work/
+qa-data/
+inventory.json
+tcg-*.json
