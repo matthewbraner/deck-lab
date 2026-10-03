@@ -38,6 +38,18 @@ let query = {
   cardQuery = "",
   cardType = "",
   attribute = "";
+let datasetView = localStorage.getItem("datasetView") || "gallery";
+const navPaths = {
+  explore: "M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z",
+  cards: "M6 3h12v18H6z M9 7h6 M9 11h6 M9 15h4",
+  builds: "M3 7l9-4 9 4-9 4z M3 12l9 4 9-4 M3 17l9 4 9-4",
+  collection: "M4 8h16v13H4z M3 3h18v5H3z M9 12h6",
+  probability: "M4 20V10 M10 20V4 M16 20v-7 M22 20H2",
+  files: "M4 4h12l4 4v13H4z M8 4v6h8V4 M8 21v-7h8v7",
+};
+function icon(id) {
+  return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${navPaths[id]}"/></svg>`;
+}
 const nav = [
   ["explore", "Explore decks"],
   ["cards", "Card library"],
@@ -110,9 +122,10 @@ async function render() {
   $("navigation").innerHTML = nav
     .map(
       ([id, name], i) =>
-        `<button data-view="${id}" class="${view === id ? "active" : ""}"><small>0${i + 1}</small> &nbsp; ${name}</button>`,
+        `<button data-view="${id}" class="${view === id ? "active" : ""}" ${view === id ? 'aria-current="page"' : ""}>${icon(id)}<span>${name}</span></button>`,
     )
     .join("");
+  document.body.dataset.view = view;
   $("title").textContent = nav.find((n) => n[0] === view)[1];
   if (view === "explore") await explore();
   if (view === "cards") await library();
@@ -134,7 +147,7 @@ async function loadCatalogue() {
 }
 async function explore() {
   $("content").innerHTML =
-    `<div class="toolbar"><label>Format${select("format", ["Master Duel", "TCG", "OCG", "Genesys", "GOAT", "Edison"], query.format)}</label><label>From<input id="from" type="date" value="${query.from}"></label><label>Through<input id="to" type="date" value="${query.to}"></label><label>Event tier${select(
+    `<div class="toolbar source-controls"><label>Format${select("format", ["Master Duel", "TCG", "OCG", "Genesys", "GOAT", "Edison"], query.format)}</label><label>From<input id="from" type="date" value="${query.from}"></label><label>Through<input id="to" type="date" value="${query.to}"></label><label>Event tier${select(
       "tier",
       [
         ["any", "All events"],
@@ -143,7 +156,7 @@ async function explore() {
       ],
       query.tier,
     )}</label><button class="primary" id="fetch-decks">Refresh dataset</button></div>
- <div class="split"><div class="panel"><input id="deck-types-search" placeholder="Find a deck type" aria-label="Find a deck type"><div class="row section-gap"><button id="hidden">${showHidden ? "Hide hidden" : "Show hidden"}</button><button id="hide-type">Hide selected</button></div><div id="type-index" class="index"></div></div><div><div class="toolbar"><label>Must include (separate with ;) <input id="include" value="${escape(required)}" placeholder="Exact card names"></label><label>Must exclude<input id="exclude" value="${escape(excluded)}" placeholder="Exact card names"></label><button id="apply-filters">Apply filters</button></div><div id="dataset"></div></div></div>`;
+ <div class="split"><div class="panel deck-index"><div class="index-heading"><span>DECK INDEX</span><span>${types.length}</span></div><input id="deck-types-search" placeholder="Find a deck type" aria-label="Find a deck type"><div class="row section-gap"><button id="hidden">${showHidden ? "Hide hidden" : "Show hidden"}</button><button id="hide-type">Hide selected</button></div><div id="type-index" class="index"></div></div><div class="dataset-column"><details class="card-filters" ${required || excluded ? "open" : ""}><summary>Card filters <span>Include / exclude exact cards</span></summary><div class="toolbar"><label>Must include (separate with ;) <input id="include" value="${escape(required)}" placeholder="Exact card names"></label><label>Must exclude<input id="exclude" value="${escape(excluded)}" placeholder="Exact card names"></label><button id="apply-filters">Apply filters</button></div></details><div id="dataset"></div></div></div>`;
   $("tier").disabled = query.format === "Master Duel";
   renderTypes();
   await dataset();
@@ -199,14 +212,30 @@ async function dataset() {
   const snap = state.snapshot;
   if (!snap) {
     $("dataset").innerHTML =
-      '<div class="empty">Select a deck type, then refresh.<br>Each submitted list contributes equally to the average.</div>';
+      '<div class="empty welcome"><span class="eyebrow">YOUR NEXT BUILD STARTS HERE</span><h2>Know your deck.<br>Find your edge.</h2><p>Choose a deck type on the left, then refresh<br>to explore card choices across submitted lists.</p><span class="empty-step">01 &nbsp; Choose a format &nbsp; / &nbsp; 02 &nbsp; Select a deck &nbsp; / &nbsp; 03 &nbsp; Explore</span></div>';
     return;
   }
   const rows = await api.aggregate(snap.decks, required, excluded);
   if (view !== "explore" || !$("dataset")) return;
-  $("dataset").innerHTML =
-    `<div class="notice">Loaded: ${escape(snap.query.format)} / ${escape(snap.query.type.name)} · ${escape(snap.query.from)}–${escape(snap.query.to)}<br><small>Updated ${date(snap.checked)}. Changing the controls does not change this saved dataset until you refresh.</small></div><div class="metrics"><div class="metric"><strong>${snap.decks.length}</strong><span>Submitted lists before card filters</span></div><div class="metric"><strong>${rows.length}</strong><span>Cards in matching lists</span></div></div><div class="toolbar"><button id="save-average">Save rounded average build</button><button id="favorite">☆ Favorite selected type</button></div>${
-      rows.length
+  const totalCopies = rows.reduce((n, r) => n + r.target, 0),
+    covered = rows.reduce((n, r) => n + Math.min(r.target, r.owned), 0);
+  const art = rows
+    .map((r) => lookup(r.name, r.cardId))
+    .filter((c) => c?.image)
+    .sort(
+      (a, b) =>
+        Number(key(b.name).includes(key(snap.query.type.name))) -
+        Number(key(a.name).includes(key(snap.query.type.name))),
+    )
+    .slice(0, 3);
+  $("dataset").innerHTML = `
+  <div class="deck-hero"><div class="hero-copy"><div class="hero-kicker"><span class="live-dot"></span>${escape(snap.query.format)} <span class="hero-divider">/</span> SAVED DATASET</div><h2>${escape(snap.query.type.name)}</h2><p>Study the field.<br>Build your next advantage.</p><div class="hero-actions"><button id="save-average" class="primary">Save average build <span aria-hidden="true">↗</span></button><button id="favorite" aria-label="Favorite selected deck type">☆ Favorite</button></div></div><div class="hero-art" aria-hidden="true">${art.map((c) => `<img src="${escape(c.image)}" alt="">`).join("")}</div></div>
+  <div class="dataset-caption"><span>${escape(snap.query.from)} — ${escape(snap.query.to)}</span><span>Updated ${date(snap.checked)}</span></div>
+  <div class="metrics dataset-metrics"><div class="metric"><span>Lists in dataset</span><strong>${snap.decks.length}</strong><small>Before card filters</small></div><div class="metric"><span>Unique cards</span><strong>${rows.length}</strong><small>In matching lists</small></div><div class="metric"><span>Collection coverage</span><strong>${totalCopies ? Math.round((100 * covered) / totalCopies) : 0}<em>%</em></strong><small>${covered} / ${totalCopies} target copies</small></div></div>
+  <div class="composition-heading"><div><h3>Deck composition</h3><p>Average copies across matching lists · all zones</p></div><div class="segmented" aria-label="Composition view"><button id="gallery-view" aria-pressed="${datasetView === "gallery"}">Gallery</button><button id="table-view" aria-pressed="${datasetView === "table"}">Table</button></div></div>
+  ${
+    rows.length
+      ? datasetView === "table"
         ? table(
             rows.map(
               (r) =>
@@ -214,8 +243,20 @@ async function dataset() {
             ),
             ["Card", "Included", "Mean", "Owned", "Missing"],
           )
-        : '<div class="empty">No matching lists.</div>'
-    }`;
+        : `<div class="composition-grid">${rows
+            .map((r) => {
+              const c = lookup(r.name, r.cardId);
+              return `<button class="composition-card" data-card="${escape(r.name)}" data-card-id="${escape(r.cardId || "")}"><div class="card-art">${c?.image ? `<img loading="lazy" src="${escape(c.image)}" alt="${escape(r.name)}">` : '<div class="art-placeholder">DECK LAB</div>'}<span class="copy-badge">${r.average.toFixed(1)}<small> AVG</small></span></div><div class="card-caption"><strong>${escape(r.name)}</strong><div><span>${Math.round(r.inclusion * 100)}% inclusion</span><span class="${r.missing ? "needed" : "covered"}">${r.missing ? `${r.missing} missing` : "Covered"}</span></div><progress value="${Math.min(r.target, r.owned)}" max="${Math.max(1, r.target)}" aria-label="Owned copies toward ${escape(r.name)} target"></progress></div></button>`;
+            })
+            .join("")}</div>`
+      : '<div class="empty"><h3>No matching lists</h3><p>Adjust your include/exclude filters to expand the sample.</p></div>'
+  }`;
+  for (const mode of ["gallery", "table"])
+    on(mode + "-view", "click", async () => {
+      datasetView = mode;
+      localStorage.setItem("datasetView", mode);
+      await dataset();
+    });
   on("favorite", "click", async () => {
     state = await api.toggle("favorites", query.format + "|" + selectedType.id);
     renderTypes();
@@ -252,7 +293,7 @@ async function library() {
   $("card-grid").innerHTML = results
     .map(
       (c) =>
-        `<button class="card-tile" data-card="${escape(c.name)}" data-card-id="${escape(c.id)}"><img loading="lazy" src="${escape(c.image)}" alt="${escape(c.name)}"><span>${escape(c.name)}</span></button>`,
+        `<button class="card-tile" data-card="${escape(c.name)}" data-card-id="${escape(c.id)}"><img loading="lazy" src="${escape(c.image)}" alt="${escape(c.name)}"><span>${escape(c.name)}</span><small>${escape(c.type)} · ${owned(state.collection[key(c.name)])} owned</small></button>`,
     )
     .join("");
   on("card-query", "change", async (e) => {
@@ -545,7 +586,7 @@ function probability() {
 }
 function files() {
   $("content").innerHTML =
-    `<div class="panel"><p class="eyebrow">YOUR LOCAL WORKSPACE</p><h2>Backup & restore</h2><p>Export your Windows collection, builds, saved buckets, hidden types and cached deck snapshot. Restore validates the backup before replacing your workspace and keeps a copy of the previous data.</p><div class="toolbar"><button id="backup" class="primary">Export JSON backup</button><button id="restore">Restore Windows backup</button></div><p class="muted">Windows backups use their own schema. Exchange individual decks with the macOS app using YDK files.</p></div><div class="panel section-gap"><h2>Windows preview 0.1</h2><p>Includes deck exploration across six formats, exact-card include/exclude filters, hidden types and favorites, card artwork and search, shared collection tracking, printing selection, manual price updates, saved builds, YDK exchange, hypergeometric odds and saved combo buckets.</p><p class="muted">The macOS app additionally includes match logs, side plans, build revisions, allocation reservations, trends, shopping aggregation, conditional probability optimization, HTML/PNG sharing and undo history. These tools are not yet ported. Prices depend on external access and may be unavailable.</p></div>`;
+    `<div class="panel"><p class="eyebrow">YOUR LOCAL WORKSPACE</p><h2>Backup & restore</h2><p>Export your Windows collection, builds, saved buckets, hidden types and cached deck snapshot. Restore validates the backup before replacing your workspace and keeps a copy of the previous data.</p><div class="toolbar"><button id="backup" class="primary">Export JSON backup</button><button id="restore">Restore Windows backup</button></div><p class="muted">Windows backups use their own schema. Exchange individual decks with the macOS app using YDK files.</p></div><div class="panel section-gap"><h2>Windows preview 0.2</h2><p>Includes deck exploration across six formats, exact-card include/exclude filters, hidden types and favorites, card artwork and search, shared collection tracking, printing selection, manual price updates, saved builds, YDK exchange, hypergeometric odds and saved combo buckets.</p><p class="muted">The macOS app additionally includes match logs, side plans, build revisions, allocation reservations, trends, shopping aggregation, conditional probability optimization, HTML/PNG sharing and undo history. These tools are not yet ported. Prices depend on external access and may be unavailable.</p></div>`;
   on("backup", "click", async () => {
     if (await api.backup()) status("Backup exported.");
   });
@@ -614,3 +655,34 @@ window.deckLabReady = (async () => {
     status(e.message, true);
   }
 })();
+
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  localStorage.setItem("theme", theme);
+  $("theme-toggle").textContent = theme === "dark" ? "Light mode" : "Dark mode";
+  $("theme-toggle").setAttribute(
+    "aria-label",
+    `Switch to ${theme === "dark" ? "light" : "dark"} mode`,
+  );
+}
+applyTheme(localStorage.getItem("theme") || "dark");
+$("theme-toggle").addEventListener("click", () =>
+  applyTheme(
+    document.documentElement.dataset.theme === "dark" ? "light" : "dark",
+  ),
+);
+async function quickSearch() {
+  view = "cards";
+  await render();
+  $("card-query")?.focus();
+}
+$("quick-search").addEventListener("click", () =>
+  quickSearch().catch((e) => status(e.message, true)),
+);
+document.addEventListener("keydown", (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+    e.preventDefault();
+    if ($("card-dialog").open) $("card-dialog").close();
+    quickSearch().catch((error) => status(error.message, true));
+  }
+});

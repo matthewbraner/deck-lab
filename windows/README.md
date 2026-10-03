@@ -1,13 +1,17 @@
-# Deck Lab for Windows · preview 0.1
+# Deck Lab for Windows · preview 0.2
 
 A Windows desktop port of Deck Lab, built with Electron. The SwiftUI macOS app remains in the repository root. This first Windows release implements the core workflows; it does not yet have full macOS feature parity.
+
+## Interface update · 0.2
+
+The explorer now opens in an artwork gallery with average-copy badges and owned-copy progress, with a table toggle for detailed comparison. A deck overview, compact index, collapsible card filters and consistent navigation keep the main actions in view. Light/dark mode and gallery/table preferences are saved locally. Press **Control-K** to focus card search. Keyboard focus remains visible, and animations respect reduced-motion preferences.
 
 ## Get the Windows installer
 
 1. Open the repository's **Actions → Windows desktop** workflow.
 2. Select a successful run for `main`.
 3. Download the **Deck-Lab-Windows-x64** artifact and unzip it.
-4. Run `Deck-Lab-Windows-0.1.0-x64-Setup.exe`.
+4. Run `Deck-Lab-Windows-0.2.0-x64-Setup.exe`.
 
 The installer targets Windows 10/11 x64. It is not code-signed with a publisher certificate; Windows may display an unknown-publisher prompt. There is no automatic updater in this preview. The installer lets you choose an installation directory and desktop shortcut.
 

@@ -12,22 +12,30 @@
   </head>
   <body>
     <aside>
-      <div class="brand">▱ <span>DECK LAB</span></div>
-      <p class="edition">WINDOWS / PREVIEW 0.1</p>
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span><span>DECK LAB</span>
+      </div>
+      <p class="edition">DESKTOP / 0.2</p>
       <nav id="navigation"></nav>
       <div class="rail-note">
-        Your collection.<br />Your next build.<br /><span
-          >Saved on this device.</span
+        <span class="local-dot"></span> Local workspace<br /><small
+          >Your collection stays with you.</small
         >
       </div>
     </aside>
     <main>
       <header>
         <div>
-          <p class="eyebrow">THE DUELIST’S WORKSPACE</p>
+          <p class="eyebrow">WORKSPACE <span>/</span> DECK LAB</p>
           <h1 id="title">Explore decks</h1>
         </div>
-        <span class="tag">WINDOWS</span>
+        <div class="header-actions">
+          <button id="quick-search" aria-label="Find a card (Control K)">
+            Find a card <kbd>Ctrl K</kbd></button
+          ><button id="theme-toggle" aria-label="Switch to light mode">
+            Light mode
+          </button>
+        </div>
       </header>
       <div id="status" role="status" aria-live="polite">
         Opening local workspace…
