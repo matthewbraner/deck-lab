@@ -125,7 +125,7 @@ async function render() {
         `<button data-view="${id}" class="${view === id ? "active" : ""}" ${view === id ? 'aria-current="page"' : ""}>${icon(id)}<span>${name}</span></button>`,
     )
     .join("");
-  document.body.dataset.view = view;
+  document.body.dataset.workspace = view;
   $("title").textContent = nav.find((n) => n[0] === view)[1];
   if (view === "explore") await explore();
   if (view === "cards") await library();
@@ -601,7 +601,7 @@ function files() {
 }
 document.addEventListener("click", async (e) => {
   try {
-    const v = e.target.closest("[data-view]"),
+    const v = e.target.closest("#navigation [data-view]"),
       t = e.target.closest("[data-type]"),
       c = e.target.closest("[data-card]");
     if (v) {

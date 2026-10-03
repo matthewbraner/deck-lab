@@ -322,9 +322,21 @@ app
         );
         if (!text.includes("Explore decks") || !text.includes("Test"))
           throw Error("Renderer failed to initialize");
+        await window.webContents.executeJavaScript(`(async () => {
+          document.querySelector('.card-filters summary').click();
+          await new Promise(resolve => setTimeout(resolve, 100));
+          if (!document.querySelector('.card-filters').open) throw Error('Card filters closed during interaction');
+          const input = document.getElementById('include');
+          input.value = 'Test Dragon';
+          const theme = document.documentElement.dataset.theme;
+          document.getElementById('theme-toggle').click();
+          await new Promise(resolve => setTimeout(resolve, 100));
+          if (document.documentElement.dataset.theme === theme) throw Error('Theme control did not switch');
+          if (document.getElementById('include').value !== 'Test Dragon') throw Error('Theme switch discarded filter input');
+        })()`);
         await store.save(state);
         console.log(
-          "Electron startup, isolated IPC, cache, renderer and persistence smoke test passed.",
+          "Electron startup, isolated IPC, filter interaction, theme state and persistence smoke test passed.",
         );
         await fs.rm(directory, { recursive: true, force: true });
         app.exit(0);
